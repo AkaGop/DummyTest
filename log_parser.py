@@ -5,7 +5,6 @@ from config import CEID_MAP, RPTID_MAP
 from parser_utils import tokenize, build_tree
 
 def _parse_s6f11_report(full_text: str) -> dict:
-    """Final, robust parser using a hierarchical tree-based approach."""
     data = {}
     try:
         tokens = tokenize(full_text)
@@ -26,7 +25,6 @@ def _parse_s6f11_report(full_text: str) -> dict:
     return data
 
 def _parse_s2f49_command(full_text: str) -> dict:
-    """Parses S2F49 Remote Commands."""
     data = {}
     rcmd = re.search(r"<\s*A\s*\[\d+\]\s*'([A-Z_]{5,})'", full_text)
     if rcmd: data['RCMD'] = rcmd.group(1)
