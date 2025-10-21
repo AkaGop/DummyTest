@@ -5,32 +5,25 @@ from collections import Counter
 from config import ALARM_MAP, CRITICAL_ALARM_IDS
 
 def find_precursor_patterns(df: pd.DataFrame, window_size: int = 5) -> pd.DataFrame:
-    """Finds sequences of warning events that occur before a critical failure."""
-    if 'details.AlarmID' not in df.columns:
-        return pd.DataFrame()
+    if 'details.AlarmID' not in df.columns: return pd.DataFrame()
     df['AlarmID_numeric'] = pd.to_numeric(df['details.AlarmID'], errors='coerce')
     critical_indices = df[df['AlarmID_numeric'].isin(CRITICAL_ALARM_IDS)].index.tolist()
     precursor_sequences = []
     for idx in critical_indices:
         start = max(0, idx - window_size)
         window_df = df.iloc[start:idx]
-        warnings = window_df[
-            (window_df['AlarmID_numeric'].notna()) &
-            (~window_df['AlarmID_numeric'].isin(CRITICAL_ALARM_IDS))
-        ]
+        warnings = window_df[(window_df['AlarmID_numeric'].notna()) & (~window_df['AlarmID_numeric'].isin(CRITICAL_ALARM_IDS))]
         if not warnings.empty:
             sequence = tuple(warnings['EventName'].tolist())
             failed_alarm_id = int(df.loc[idx, 'AlarmID_numeric'])
             failed_alarm_name = ALARM_MAP.get(failed_alarm_id, f"Critical Alarm {failed_alarm_id}")
             precursor_sequences.append({"Pattern": " -> ".join(sequence), "Leads_To_Failure": failed_alarm_name})
-    if not precursor_sequences:
-        return pd.DataFrame()
+    if not precursor_sequences: return pd.DataFrame()
     pattern_counts = Counter((seq['Pattern'], seq['Leads_To_Failure']) for seq in precursor_sequences)
     result = [{"Precursor Pattern": p, "Leads to Failure": f, "Occurrences": c} for (p, f), c in pattern_counts.items()]
     return pd.DataFrame(result).sort_values(by="Occurrences", ascending=False)
 
 def perform_eda(df: pd.DataFrame) -> dict:
-    """Performs Exploratory Data Analysis on the parsed log data."""
     eda_results = {}
     if 'EventName' in df.columns: eda_results['event_counts'] = df['EventName'].value_counts()
     else: eda_results['event_counts'] = pd.Series(dtype='int64')
@@ -45,7 +38,6 @@ def perform_eda(df: pd.DataFrame) -> dict:
     return eda_results
 
 def analyze_data(events: list) -> dict:
-    """Analyzes a list of parsed events to calculate high-level KPIs."""
     summary = {
         "operators": set(), "magazines": set(), "lot_id": "N/A", "panel_count": 0,
         "job_start_time": "N/A", "job_end_time": "N/A", "total_duration_sec": 0.0,
