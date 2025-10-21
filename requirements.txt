@@ -1,0 +1,5 @@
+# Deployment Timestamp: 20251026150000  <-- Change this number
+# This file forces a clean rebuild on Streamlit Cloud.
+
+streamlit>=1.30.0
+pandas>=2.0.0
