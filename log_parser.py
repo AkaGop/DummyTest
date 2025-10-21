@@ -30,7 +30,7 @@ def _parse_s2f49_command(full_text: str) -> dict:
     if rcmd: data['RCMD'] = rcmd.group(1)
     lotid = re.search(r"'LOTID'\s*>\s*<A\[\d+\]\s*'([^']*)'", full_text, re.IGNORECASE)
     if lotid: data['LotID'] = lotid.group(1)
-    panels = re.search(r"'LOTPANELS'\s*>\s*<L\s\[(\d+)\]", full_text, re.IGNORECASE)
+    panels = re.search(r"'LOTPANELS'\s*>\s*<L\s*\[(\d+)\]", full_text, re.IGNORECASE)
     if panels: data['PanelCount'] = int(panels.group(1))
     return data
 
