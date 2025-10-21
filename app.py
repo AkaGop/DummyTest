@@ -103,4 +103,4 @@ if uploaded_file:
         display_cols = [col for col in cols if col in df.columns]
         st.dataframe(df[display_cols], hide_index=True)
     else:
-        st.warning("No meaningful events were found."
+        st.warning("No meaningful events were found.")
