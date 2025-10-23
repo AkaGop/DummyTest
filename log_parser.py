@@ -4,24 +4,61 @@ from io import StringIO
 from config import CEID_MAP, RPTID_MAP
 from parser_utils import tokenize, build_tree
 
+def _find_ceid(tree):
+    """Recursively search for the first valid CEID in the tree."""
+    if isinstance(tree, str) and tree.isdigit():
+        ceid_candidate = int(tree)
+        if ceid_candidate in CEID_MAP:
+            return ceid_candidate
+    if isinstance(tree, list):
+        for item in tree:
+            result = _find_ceid(item)
+            if result is not None:
+                return result
+    return None
+
+def _find_values(tree, rptid_val=None):
+    """
+    Recursively search the parsed tree for a specific RPTID and return its
+    corresponding value list (payload).
+    """
+    if isinstance(tree, list):
+        if len(tree) > 1 and tree[0] == str(rptid_val):
+            return tree[1]
+        for item in tree:
+            result = _find_values(item, rptid_val)
+            if result is not None:
+                return result
+    return None
+
 def _parse_s6f11_report(full_text: str) -> dict:
+    """
+    Parses an S6F11 message by tokenizing, building a tree, and then
+    safely traversing the tree to find the CEID, RPTID, and data payload.
+    """
     data = {}
     try:
         tokens = tokenize(full_text)
         tree = build_tree(tokens)
-        s6f11_body = tree[0]
-        ceid = int(s6f11_body[1])
-        report_list = s6f11_body[2]
-        rptid = int(report_list[0][0])
-        payload = report_list[0][1]
-        if ceid in CEID_MAP: data['CEID'] = ceid
-        if "Alarm" in CEID_MAP.get(ceid, ''): data['AlarmID'] = ceid
-        if rptid in RPTID_MAP:
-            data['RPTID'] = rptid
-            field_names = RPTID_MAP.get(rptid, [])
-            for i, name in enumerate(field_names):
-                if i < len(payload): data[name] = payload[i]
-    except (IndexError, ValueError): pass
+        if not tree: return {}
+
+        ceid = _find_ceid(tree)
+
+        if ceid:
+            data['CEID'] = ceid
+            if "Alarm" in CEID_MAP.get(ceid, ''): data['AlarmID'] = ceid
+
+            for rptid_val in RPTID_MAP:
+                payload = _find_values(tree, rptid_val)
+                if payload:
+                    data['RPTID'] = rptid_val
+                    field_names = RPTID_MAP.get(rptid_val, [])
+                    for i, name in enumerate(field_names):
+                        if i < len(payload): data[name] = payload[i]
+                    break
+
+    except (IndexError, ValueError, TypeError):
+        pass
     return data
 
 def _parse_s2f49_command(full_text: str) -> dict:

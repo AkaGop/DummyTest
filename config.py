@@ -24,6 +24,7 @@ RPTID_MAP = {
     122: ['Timestamp', 'LotID', 'SourcePortID', 'DestPortID', 'PanelList'],
     11:  ['Timestamp', 'ControlState'],
     101: ['Timestamp', 'AlarmIDValue'],
+    1001: ['PortStatus', 'OperatorID'],
 }
 
 ALARM_MAP = {
